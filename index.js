@@ -1,9 +1,10 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
-import { generate, loadCorpus } from './lib/generator.js'
+import { generate, loadCorpus, usage } from './lib/generator.js'
 import moment from 'moment'
 import { randomPick } from './lib/random.js'
 import commandLineArgs from 'command-line-args'
+import { interact } from './lib/watch.js'
 const [corpus, __dirname] = loadCorpus('./corpus/data.json')
 // fs.appendFile(importPath, 'Hello World', (err) => {
 //   console.log(err)
@@ -14,11 +15,10 @@ const [corpus, __dirname] = loadCorpus('./corpus/data.json')
 const optionDefinitions = [
   { name: 'title', alias: 't', type: String },
   { name: 'min', alias: 'm', type: Number },
-  { name: 'max', alias: 'x', type: Number }
+  { name: 'max', alias: 'x', type: Number },
+  { name: 'help' }
 ]
 const options = commandLineArgs(optionDefinitions)
-console.log(options.title)
-const article = generate(corpus.title, { ...options, corpus })
 
 function saveCorpus (title, article) {
   const outputDir = resolve(__dirname, 'output')
@@ -35,6 +35,22 @@ function saveCorpus (title, article) {
   writeFileSync(outputFile, text, { encoding: 'utf-8' })
   return outputDir
 }
-const title = options.title || randomPick(corpus.title)()
-const output = saveCorpus(title, article)
-console.log(`生成成功！文章保存于：${output}`)
+let title = options.title || randomPick(corpus.title)()
+
+async function createText () {
+  if (Object.keys(options).length <= 0) {
+    const answers = await interact()
+    title = answers[0]
+    options.min = answers[1]
+    options.max = answers[2]
+    console.log(options)
+  }
+  const article = generate(title, { ...options, corpus })
+  if ('help' in options) {
+    console.log(usage)
+    process.exit(0)
+  }
+  const output = saveCorpus(title, article)
+  console.log(`生成成功！文章保存于：${output}`)
+}
+createText()
