@@ -1,41 +1,46 @@
 import http from 'http'
-import url from 'url'
-import path from 'path'
-import fs from 'fs'
-import mime from 'mime'
+import Interceptor from './interceptor/index.js'
 
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
-export const server = http.createServer((req, res) => {
-//   const filePath = path.resolve(__dirname, path.join('wwww', url.fileURLToPath(`file:///${req.url}`)))
-  let filePath = path.resolve(path.dirname(__dirname), path.join('www', url.fileURLToPath(`file:/${req.url}`))) // 解析请求的路径
-  console.log(filePath)
-  if (fs.existsSync(filePath)) {
-    const stats = fs.statSync(filePath)
-    const isDir = stats.isDirectory()
-    if (isDir) {
-      filePath = path.join(filePath, 'index.html')
-    }
+export default class Server {
+  constructor () {
+    const interceptor = new Interceptor()
+    this.server = http.createServer(async (req, res) => {
+      await interceptor.run({ req, res }) // 执行注册了的拦截器切面
+      // 请求完成 数据刷新后
+      if (!res.writableFinished) {
+        let body = res.body || '200 OK'
+        if (body.pipe) {
+          body.pipe(res)
+        }
+        else {
+          if (typeof body !== 'string' && res.getHeader('Content-Type') === 'application/json') {
+            body = JSON.stringify(body)
+          }
+          res.end(body)
+        }
+      }
+    })
 
-    if (!isDir || fs.existsSync(filePath)) {
-      const file = fs.readFileSync(filePath)
+    this.server.on('clientError', (err, socket) => {
+      console.log(err, 'err')
+      socket.end('HTTP/1.1 400 Bad Request\r\n\r\n')
+    })
 
-      const { ext } = path.parse(filePath)
-      res.writeHead(200, { 'Content-Type': mime.getType(ext) })
-      return res.end(file)
-      // 文件流方式读取
-      // const fileStream = fs.createReadStream(filePath)
-      // fileStream.pipe(res)
-      // return
-    }
+    this.interceptor = interceptor
   }
-  res.writeHead(404, { 'Content-Type': 'text/html' })
-  res.end('<h1>Not Found</h1>')
-})
-server.on('clientError', (err, socket) => {
-  console.log(err)
-  socket.end('HTTP/1.1 400 Bad Request\r\n\r\n')
-})
 
-server.listen(8080, () => {
-  console.log('opened server on', server.address())
-})
+  // 启动服务
+  listen (options, cb = () => null) {
+    if (typeof options === 'number') {
+      options = { port: options }
+    }
+    options.host = options.host || '0.0.0.0'
+    console.log('Server up' + `http://${options.host}:${options.port}`)
+    this.server.listen(options, () => { cb(this.server) })
+  }
+
+  // 添加拦截器
+  use (aspect) {
+    return this.interceptor.use(aspect)
+  }
+}
