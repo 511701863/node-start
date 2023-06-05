@@ -6,14 +6,12 @@ import mime from 'mime'
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
-export default async function aspect1 ({ res, req, route }, next) {
+export default async function aspect1 ({ res, req, route, cookie }, next) {
   let changePath = req.url
-  console.log(req.url)
   const changePathArr = changePath.split('/')
-  console.log(changePath)
   if (changePathArr.length === 3) {
-    if (changePathArr[changePathArr.length - 1] !== 'index.css') {
-      changePath = '/index.html'
+    if (changePathArr[changePathArr.length - 1] !== 'todo-list.html') {
+      changePath = '/todo-list.html'
     }
     else {
       changePath = '/index.css'

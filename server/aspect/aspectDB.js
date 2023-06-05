@@ -6,9 +6,9 @@ import { getList } from '../utils/todolist.js'
 const __dirname = path.resolve()
 
 export default async function aspectDB ({ res, req, dataBase }, next) {
+  res.setHeader('Set-Cookie', `userId=${6666}; Path=/list`)
   res.setHeader('Content-Type', 'application/json')
   const result = await getList(dataBase)
-  console.log(result, 'dataBase')
   res.body = { data: result }
   await next()
 }

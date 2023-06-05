@@ -1,35 +1,31 @@
 import querystring from 'querystring'
 import fs from 'fs'
-// 编译模板
-import handleBars from 'handlebars'
-import { getCoronavirusKeyIndex, getCoronavirusByDate } from '../mock/index.js'
 import path from 'path'
-// 获取模板文件
-const tpl = fs.readFileSync(path.join(path.resolve(), './www/server-index.html'), { encoding: 'utf-8' })
-const tplData = fs.readFileSync(path.join(path.resolve(), './www/server-index-data.html'), { encoding: 'utf-8' })
+
 export default async function getParams (ctx, next) {
   const { req, res } = ctx
   const { query } = new URL(`http://${req.headers.host}${req.url}`)
   ctx.params = querystring.parse(query)
-  let data = []
-  let contentType = 'application/json'
-  if (ctx.route.url) {
-    data = getCoronavirusByDate(ctx.route.url)
-    // 编译模板
-    const template = handleBars.compile(tplData)
-    // 结合数据模板
-    data = template({ data })
-    contentType = 'text/html'
+  if (req.method === 'POST') {
+    const headers = req.headers
+    // 读取POST的body数据
+    const body = await new Promise((resolve) => {
+      let data = ''
+      console.log(req.data)
+      req.on('data', (chunk) => {
+        data += chunk.toString()
+      })
+      req.on('end', () => {
+        resolve(data)
+      })
+    })
+    ctx.params = ctx.params || {}
+    if (headers['content-type'] === 'application/x-www-form-urlencoded') {
+      Object.assign(ctx.params, querystring.parse(body))
+    }
+    else {
+      Object.assign(ctx.params, JSON.parse(body))
+    }
   }
-  else {
-    data = getCoronavirusKeyIndex()
-    // 编译模板
-    const template = handleBars.compile(tpl)
-    // 结合数据模板
-    data = template({ data })
-    contentType = 'text/html'
-  }
-  res.setHeader('Content-Type', contentType)
-  res.body = data
   await next()
 }

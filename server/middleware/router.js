@@ -35,6 +35,7 @@ export function route (method, rule, aspect) {
     const req = ctx.req
     if (!ctx.url) ctx.url = new URL(`http://${req.headers.host}${req.url}`)
     const checked = check(rule, ctx.url.pathname) // 根据路径规则解析路径
+    // ctx.route 一个请求只匹配第一册
     if (!ctx.route && (method === '*' || req.method === method) &&
             !!checked) {
       ctx.route = checked
@@ -57,5 +58,9 @@ export class Router {
 
   post (rule, aspect) {
     return route('POST', path.join(this.baseURL, rule), aspect)
+  }
+
+  all (rule, aspect) {
+    return route('*', path.join(this.baseURL, rule), aspect)
   }
 }
