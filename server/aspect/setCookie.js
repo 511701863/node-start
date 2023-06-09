@@ -1,12 +1,13 @@
-export async function getCookie (ctx, next) {
-  const { req } = ctx
-  const cookieStr = decodeURIComponent(req.headers.cookie)
-  const cookies = cookieStr.split(/\s*;\s*/)
-  console.log(cookies)
-  ctx.cookie = {}
-  cookies.forEach(cookie => {
-    const [key, value] = cookie.split('=')
-    ctx.cookie[key] = value
-  })
+
+export default async function setCookie (ctx, next) {
+  const { cookie, route, res } = ctx
+  res.setHeader('Content-Type', 'text/html;charset=utf-8')
+  // 设置cookie
+  let id = cookie?.userId ?? false
+  if (!id) {
+    id = Math.random().toString(36).slice(2)
+  }
+  res.setHeader('Set-Cookie', `userId=${id};Path=/; Max-Age=86400`)
+  ctx.cookie.userId = id
   await next()
 }

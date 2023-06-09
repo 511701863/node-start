@@ -11,7 +11,6 @@ export default async function getParams (ctx, next) {
     // 读取POST的body数据
     const body = await new Promise((resolve) => {
       let data = ''
-      console.log(req.data)
       req.on('data', (chunk) => {
         data += chunk.toString()
       })

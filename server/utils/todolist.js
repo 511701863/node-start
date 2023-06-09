@@ -6,7 +6,6 @@ export async function getList (database) {
 export async function addTask (database, { text, state }) {
   try {
     const data = await database.run('INSERT INTO todo(text,state) VALUES (?, ?)', text, state)
-    console.log(data, 1234)
     return { err: '', data }
   }
   catch (ex) {

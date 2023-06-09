@@ -1,11 +1,15 @@
-import querystring from 'querystring'
-import fs from 'fs'
-import path from 'path'
 import { updateTask } from '../utils/todolist.js'
-export default async function updateTaskFn ({ res, dataBase, params, cookie }, next) {
-  console.log('addTask', cookie)
+import { checkLogin } from './aspectDB.js'
+export default async function updateTaskFn (ctx, next) {
+  const { res, dataBase, params, cookie } = ctx
+  const userInfo = await checkLogin(ctx)
   res.setHeader('Content-Type', 'application/json')
-  const result = await updateTask(dataBase, params)
-  res.body = result
+  if (userInfo) {
+    const result = await updateTask(dataBase, params)
+    res.body = result
+  }
+  else {
+    res.body = { err: 'not login' }
+  }
   await next()
 }

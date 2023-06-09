@@ -11,7 +11,7 @@ export default async function aspect1 ({ res, req, route, cookie }, next) {
   const changePathArr = changePath.split('/')
   if (changePathArr.length === 3) {
     if (changePathArr[changePathArr.length - 1] !== 'todo-list.html') {
-      changePath = '/todo-list.html'
+      changePath = changePathArr[changePathArr.length - 1] === 'login' ? '/login.html' : '/todo-list.html'
     }
     else {
       changePath = '/index.css'

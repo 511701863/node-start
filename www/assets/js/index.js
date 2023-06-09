@@ -82,6 +82,9 @@ async function updateItem (id, state) {
     body: `id=${id}&state=${state}`
   })).json()
 
+  if (result.err) {
+    window.location.replace('/home/login')
+  }
   return result
 }
 
@@ -94,14 +97,16 @@ async function saveItem (text) {
     body: `text=${text}&state=0`
   })).json()
 
+  if (result.err) {
+    window.location.replace('/home/login')
+  }
   return result
 }
 
 async function loadItems (list) {
   const { err, data } = await (await fetch('/list/todo/getlist')).json()
-  console.log(err, data)
   if (err) {
-    window.location.replace('/login.html')
+    window.location.replace('/home/login')
   }
   else {
     data.forEach(({ id, state, text }) => addItem(id, list, text, states[state]))
